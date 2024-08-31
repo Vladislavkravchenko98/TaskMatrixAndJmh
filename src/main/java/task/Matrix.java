@@ -38,6 +38,20 @@ public class Matrix {
     }
 
     public static void main(String[] args) throws Exception {
+        //var rows = 2000;
+        //var cols = 2000;
+        //matrixA = inputMatrix(rows, cols);
+        //matrixB = inputMatrix(cols, rows);
+
+        /*matrixA = new int[][] {
+                {1, 2},
+                {-3, 2}
+        };
+        matrixB = new int[][] {
+                {-4, 1, 3},
+                {1, 3, -2}
+        }; */
+
         Options opt = new OptionsBuilder()
                 .include(Matrix.class.getSimpleName())
                 //.warmupIterations(3).measurementIterations(5).forks(1)
@@ -45,31 +59,30 @@ public class Matrix {
 
         new Runner(opt).run();
 
-        usualMultiplication();
-        optimizedMultiplication();
+        //usualMultiplication();
+        //optimizedMultiplication();
     }
 
     @Benchmark
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     @Warmup(iterations = 3, time = 1, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 3, time = 1, timeUnit = TimeUnit.MILLISECONDS)
     @Fork(value = 2, warmups = 1)
     //@Threads(4)
     // Обычное умножение матриц
     public static void usualMultiplication() {
-        //Date start = new Date();
+        Date start = new Date();
         var matrixResult = new int[matrixA.length][matrixB[0].length];
-        for (var i = 0; i < matrixResult.length; i++) {
-            for (var j = 0; j < matrixResult[0].length; j++) {
-                matrixResult[i][j] = 0;
-                for (var k = 0; k < matrixA[0].length; k++) {
+        for (int i = 0; i < matrixA.length; i++) {
+            for (int j = 0; j < matrixB[0].length; j++) {
+                for (int k = 0; k < matrixB.length; k++) {
                     matrixResult[i][j] += matrixA[i][k] * matrixB[k][j];
                 }
             }
         }
-        //Date end = new Date();
-        //System.out.println("\n usual Time taken in milli seconds: " + (end.getTime() - start.getTime()));
+        Date end = new Date();
+        System.out.println("\n usual Time taken in milli seconds: " + (end.getTime() - start.getTime()));
         //printMatrix(matrixResult);
     }
 
@@ -77,19 +90,38 @@ public class Matrix {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     @Warmup(iterations = 3, time = 1, timeUnit = TimeUnit.MILLISECONDS)
-    @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.MILLISECONDS)
+    @Measurement(iterations = 3, time = 1, timeUnit = TimeUnit.MILLISECONDS)
     @Fork(value = 2, warmups = 1)
     //@Threads(4)
-    // Оптимизированное умножение матриц. Мы создадим поток для каждой строки в матрице, который будет выполнять
-    // умножение параллельно, что позволит сократить время обработки.
+    // Оптимизированное умножение матриц
     public static void optimizedMultiplication() {
-        //Date start = new Date();
-        var matrixResult = new int[matrixA.length][matrixB[0].length];
-        ParallelThreadsCreator.multiply(matrixA, matrixB, matrixResult);
-        //Date end = new Date();
-        //System.out.println("\n optimized Time taken in milli seconds: " + (end.getTime() - start.getTime()));
+        Date start = new Date();
+        var transposedB = transposition(matrixB);
+        var matrixResult = new int[matrixA.length][transposedB.length];
+        for (int i = 0; i < matrixA.length; i++) {
+            for (int j = 0; j < transposedB.length; j++) {
+                for (int k = 0; k < matrixA[0].length; k++) {
+                    matrixResult[i][j] += matrixA[i][k] * transposedB[j][k];
+                }
+            }
+        }
+        Date end = new Date();
+        System.out.println("\n optimized Time taken in milli seconds: " + (end.getTime() - start.getTime()));
         //printMatrix(matrixResult);
     }
+
+
+    public static int[][] transposition(int[][]matrix) {
+        int rows = matrix.length;
+        int cols = matrix[0].length;
+        int[][] transposed = new int[cols][rows];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                transposed[j][i] = matrix[i][j];
+            }
+        }
+        return transposed;
+     }
 
     public static int[][] inputMatrix(int rows, int cols) {
         var matrix = new int[rows][cols];
@@ -115,176 +147,227 @@ public class Matrix {
 }
 
 /*
-Для матриц небольшого размера:
-
-# Run progress: 0,00% complete, ETA 00:00:00
-# Warmup Fork: 1 of 1
-# Warmup Iteration   1: 3698525,000 ±(99.9%) 33820930,602 ns/op
-# Warmup Iteration   2: 1175525,000 ±(99.9%) 1096422,744 ns/op
-# Warmup Iteration   3: 1368725,000 ±(99.9%) 1709127,512 ns/op
-Iteration   1: 894850,000 ±(99.9%) 4035490,427 ns/op
-Iteration   2: 1863650,000 ±(99.9%) 8128878,814 ns/op
-Iteration   3: 1142700,000 ±(99.9%) 1505674,203 ns/op
-Iteration   4: 1287425,000 ±(99.9%) 4056624,864 ns/op
-Iteration   5: 1246975,000 ±(99.9%) 3986636,606 ns/op
-
-# Run progress: 16,67% complete, ETA 00:00:04
-# Fork: 1 of 2
-# Warmup Iteration   1: 1308925,000 ±(99.9%) 2360902,655 ns/op
-# Warmup Iteration   2: 1158725,000 ±(99.9%) 1876170,420 ns/op
-# Warmup Iteration   3: 1242325,000 ±(99.9%) 1958145,080 ns/op
-Iteration   1: 1132825,000 ±(99.9%) 3270404,191 ns/op
-Iteration   2: 1112200,000 ±(99.9%) 2096317,208 ns/op
-Iteration   3: 1107750,000 ±(99.9%) 2982044,708 ns/op
-Iteration   4: 1045650,000 ±(99.9%) 1886362,194 ns/op
-Iteration   5: 1129825,000 ±(99.9%) 2399561,762 ns/op
-
-# Run progress: 33,33% complete, ETA 00:00:03
-# Fork: 2 of 2
-# Warmup Iteration   1: 1863975,000 ±(99.9%) 3577564,757 ns/op
-# Warmup Iteration   2: 1552575,000 ±(99.9%) 4371229,838 ns/op
-# Warmup Iteration   3: 1515950,000 ±(99.9%) 7369602,805 ns/op
-Iteration   1: 1451550,000 ±(99.9%) 1640653,530 ns/op
-Iteration   2: 1714425,000 ±(99.9%) 2352882,832 ns/op
-Iteration   3: 1742275,000 ±(99.9%) 3384661,263 ns/op
-Iteration   4: 1462300,000 ±(99.9%) 1901932,043 ns/op
-Iteration   5: 1345425,000 ±(99.9%) 3581079,063 ns/op
-
-Result "task.Matrix.optimizedMultiplication":
-  1324422,500 ±(99.9%) 392498,601 ns/op [Average]
-  (min, avg, max) = (1045650,000, 1324422,500, 1742275,000), stdev = 259613,523
-  CI (99.9%): [931923,899, 1716921,101] (assumes normal distribution)
-
-# Run progress: 50,00% complete, ETA 00:00:02
-# Warmup Fork: 1 of 1
-# Warmup Iteration   1: 6228,285 ±(99.9%) 19894,508 ns/op
-# Warmup Iteration   2: 5296,982 ±(99.9%) 3653,654 ns/op
-# Warmup Iteration   3: 5307,230 ±(99.9%) 2124,729 ns/op
-Iteration   1: 6730,769 ±(99.9%) 3715,126 ns/op
-Iteration   2: 5199,306 ±(99.9%) 3550,477 ns/op
-Iteration   3: 5003,333 ±(99.9%) 2494,547 ns/op
-Iteration   4: 4740,935 ±(99.9%) 4929,484 ns/op
-Iteration   5: 9865,378 ±(99.9%) 81766,480 ns/op
-
-# Run progress: 66,67% complete, ETA 00:00:01
-# Fork: 1 of 2
-# Warmup Iteration   1: 6030,245 ±(99.9%) 2201,946 ns/op
-# Warmup Iteration   2: 7287,077 ±(99.9%) 8854,958 ns/op
-# Warmup Iteration   3: 7009,375 ±(99.9%) 6470,847 ns/op
-Iteration   1: 6905,000 ±(99.9%) 7100,863 ns/op
-Iteration   2: 7434,583 ±(99.9%) 9252,626 ns/op
-Iteration   3: 6178,750 ±(99.9%) 13065,622 ns/op
-Iteration   4: 8214,444 ±(99.9%) 37529,152 ns/op
-Iteration   5: 8208,154 ±(99.9%) 36246,267 ns/op
-
-# Run progress: 83,33% complete, ETA 00:00:00
-# Fork: 2 of 2
-# Warmup Iteration   1: 7300,170 ±(99.9%) 8002,104 ns/op
-# Warmup Iteration   2: 9390,000 ±(99.9%) 11341,973 ns/op
-# Warmup Iteration   3: 8137,863 ±(99.9%) 6674,857 ns/op
-Iteration   1: 9159,821 ±(99.9%) 35299,465 ns/op
-Iteration   2: 8116,667 ±(99.9%) 3048,748 ns/op
-Iteration   3: 8185,417 ±(99.9%) 2283,971 ns/op
-Iteration   4: 10414,861 ±(99.9%) 5225,165 ns/op
-Iteration   5: 8415,069 ±(99.9%) 6068,803 ns/op
-
-Result "task.Matrix.usualMultiplication":
-  8123,277 ±(99.9%) 1758,067 ns/op [Average]
-  (min, avg, max) = (6178,750, 8123,277, 10414,861), stdev = 1162,852
-  CI (99.9%): [6365,210, 9881,343] (assumes normal distribution)
-
-# Run complete. Total time: 00:00:05
-------------------------------------------------------------------------------------------------------------------------
-Для больших матриц 2000x2000
-usual Time taken in milli seconds: 52850
-optimized Time taken in milli seconds: 16032
-
-
-# Run progress: 0,00% complete, ETA 00:00:00
-# Warmup Fork: 1 of 1
-# Warmup Iteration   1: 15821,458 ms/op
-# Warmup Iteration   2: 16129,848 ms/op
-# Warmup Iteration   3: 16162,994 ms/op
-Iteration   1: 16201,444 ms/op
-Iteration   2: 16173,996 ms/op
-Iteration   3: 16129,737 ms/op
-Iteration   4: 16152,519 ms/op
-Iteration   5: 16088,972 ms/op
-
-# Run progress: 16,67% complete, ETA 00:10:49
-# Fork: 1 of 2
-# Warmup Iteration   1: 15747,639 ms/op
-# Warmup Iteration   2: 16070,525 ms/op
-# Warmup Iteration   3: 15842,698 ms/op
-Iteration   1: 15726,068 ms/op
-Iteration   2: 15845,307 ms/op
-Iteration   3: 15739,208 ms/op
-Iteration   4: 15746,220 ms/op
-Iteration   5: 15987,608 ms/op
-
-# Run progress: 33,33% complete, ETA 00:08:35
-# Fork: 2 of 2
-# Warmup Iteration   1: 15815,918 ms/op
-# Warmup Iteration   2: 16213,786 ms/op
-# Warmup Iteration   3: 15839,194 ms/op
-Iteration   1: 15799,037 ms/op
-Iteration   2: 15892,232 ms/op
-Iteration   3: 15873,054 ms/op
-Iteration   4: 15983,810 ms/op
-Iteration   5: 15920,949 ms/op
-
-
-Result "task.Matrix.optimizedMultiplication":
-  15851,349 ±(99.9%) 147,095 ms/op [Average]
-  (min, avg, max) = (15726,068, 15851,349, 15987,608), stdev = 97,294
-  CI (99.9%): [15704,255, 15998,444] (assumes normal distribution)
-
+------------------------------------------------------------
+!!!!!!!!!!!!!!!!!!!!!!!!Для матриц размером 2000x2000!!!!!!!!!!!!!!!!!!!!!!!
+ usual Time taken in milli seconds: 51319
+ optimized Time taken in milli seconds: 4016
+------- usual with JMH (2000x2000)
 # JMH version: 1.37
-# Warmup: 3 iterations, 1 ms each
-# Measurement: 5 iterations, 1 ms each
-# Timeout: 10 min per iteration
-# Threads: 1 thread, will synchronize iterations
-# Benchmark mode: Average time, time/op
-# Benchmark: task.Matrix.usualMultiplication
 
-# Run progress: 50,00% complete, ETA 00:06:25
+# Run progress: 50,00% complete, ETA 00:01:18
 # Warmup Fork: 1 of 1
-# Warmup Iteration   1: 51070,037 ms/op
-# Warmup Iteration   2: 53128,631 ms/op
-# Warmup Iteration   3: 53196,430 ms/op
-Iteration   1: 52347,027 ms/op
-Iteration   2: 52297,313 ms/op
-Iteration   3: 52383,848 ms/op
-Iteration   4: 52245,688 ms/op
-Iteration   5: 52289,240 ms/op
+# Warmup Iteration   1: 54295,457 ms/op
+# Warmup Iteration   2: 54743,692 ms/op
+# Warmup Iteration   3: 54515,343 ms/op
+Iteration   1: 54008,495 ms/op
+Iteration   2: 54950,508 ms/op
+Iteration   3: 55302,945 ms/op
 
-# Run progress: 66,67% complete, ETA 00:06:42
+# Run progress: 66,67% complete, ETA 00:03:23
 # Fork: 1 of 2
-# Warmup Iteration   1: 50210,004 ms/op
-# Warmup Iteration   2: 51980,588 ms/op
-# Warmup Iteration   3: 51937,111 ms/op
-Iteration   1: 50690,320 ms/op
-Iteration   2: 50684,419 ms/op
-Iteration   3: 50735,735 ms/op
-Iteration   4: 51153,568 ms/op
-Iteration   5: 51112,353 ms/op
+# Warmup Iteration   1: 52954,515 ms/op
+# Warmup Iteration   2: 53960,206 ms/op
+# Warmup Iteration   3: 54177,210 ms/op
+Iteration   1: 53146,784 ms/op
+Iteration   2: 53086,791 ms/op
+Iteration   3: 54161,922 ms/op
 
-# Run progress: 83,33% complete, ETA 00:04:03
+# Run progress: 83,33% complete, ETA 00:02:26
 # Fork: 2 of 2
-# Warmup Iteration   1: 51952,530 ms/op
-# Warmup Iteration   2: 53106,905 ms/op
-# Warmup Iteration   3: 53049,856 ms/op
-Iteration   1: 53063,133 ms/op
-Iteration   2: 52968,673 ms/op
-Iteration   3: 53071,142 ms/op
-Iteration   4: 53212,224 ms/op
-Iteration   5: 52985,552 ms/op
+# Warmup Iteration   1: 51796,763 ms/op
+# Warmup Iteration   2: 54491,188 ms/op
+# Warmup Iteration   3: 58515,556 ms/op
+Iteration   1: 56318,138 ms/op
+Iteration   2: 55910,036 ms/op
+Iteration   3: 61546,754 ms/op
+
+Result "task.Matrix.usualMultiplication":
+  55695,071 ±(99.9%) 8896,306 ms/op [Average]
+  (min, avg, max) = (53086,791, 55695,071, 61546,754), stdev = 3172,509
+  CI (99.9%): [46798,764, 64591,377] (assumes normal distribution)
+------- optimized with JMH (2000x2000)
+# Run progress: 0,00% complete, ETA 00:00:00
+# Warmup Fork: 1 of 1
+# Warmup Iteration   1: 4910,483 ms/op
+# Warmup Iteration   2: 4395,999 ms/op
+# Warmup Iteration   3: 3988,137 ms/op
+Iteration   1: 4055,465 ms/op
+Iteration   2: 4027,166 ms/op
+Iteration   3: 4088,722 ms/op
+
+# Run progress: 16,67% complete, ETA 00:02:12
+# Fork: 1 of 2
+# Warmup Iteration   1: 4348,062 ms/op
+# Warmup Iteration   2: 4237,879 ms/op
+# Warmup Iteration   3: 4036,714 ms/op
+Iteration   1: 3995,963 ms/op
+Iteration   2: 4015,766 ms/op
+Iteration   3: 4076,259 ms/op
+
+# Run progress: 33,33% complete, ETA 00:01:44
+# Fork: 2 of 2
+# Warmup Iteration   1: 4335,337 ms/op
+# Warmup Iteration   2: 4438,530 ms/op
+# Warmup Iteration   3: 4456,666 ms/op
+Iteration   1: 4140,981 ms/op
+Iteration   2: 4284,481 ms/op
+Iteration   3: 4135,997 ms/op
+
+
+Result "task.Matrix.optimizedMultiplication":
+  4108,241 ±(99.9%) 294,329 ms/op [Average]
+  (min, avg, max) = (3995,963, 4108,241, 4284,481), stdev = 104,960
+  CI (99.9%): [3813,913, 4402,570] (assumes normal distribution)
+------------------------------------------------------------
+!!!!!!!!!!!!!!!!!!!Для матриц размером 1000x2000 и 2000x1000!!!!!!!!!!!!!!!!
+------- usual with JMH (1000x2000 и 2000x1000)
+# Run progress: 0,00% complete, ETA 00:00:00
+# Warmup Fork: 1 of 1
+# Warmup Iteration   1: 9556,026 ms/op
+# Warmup Iteration   2: 9886,481 ms/op
+# Warmup Iteration   3: 10583,982 ms/op
+Iteration   1: 11168,277 ms/op
+Iteration   2: 10142,782 ms/op
+Iteration   3: 10053,772 ms/op
+
+# Run progress: 33,33% complete, ETA 00:02:04
+# Fork: 1 of 2
+# Warmup Iteration   1: 10363,633 ms/op
+# Warmup Iteration   2: 10026,262 ms/op
+# Warmup Iteration   3: 10439,223 ms/op
+Iteration   1: 10483,210 ms/op
+Iteration   2: 10512,708 ms/op
+Iteration   3: 10460,787 ms/op
+
+# Run progress: 66,67% complete, ETA 00:01:02
+# Fork: 2 of 2
+# Warmup Iteration   1: 10334,321 ms/op
+# Warmup Iteration   2: 9927,287 ms/op
+# Warmup Iteration   3: 10179,891 ms/op
+Iteration   1: 10093,461 ms/op
+Iteration   2: 10156,665 ms/op
+Iteration   3: 10150,833 ms/op
 
 
 Result "task.Matrix.usualMultiplication":
-  51967,712 ±(99.9%) 1759,873 ms/op [Average]
-  (min, avg, max) = (50684,419, 51967,712, 53212,224), stdev = 1164,047
-  CI (99.9%): [50207,839, 53727,585] (assumes normal distribution)
+  10309,611 ±(99.9%) 546,007 ms/op [Average]
+  (min, avg, max) = (10093,461, 10309,611, 10512,708), stdev = 194,711
+  CI (99.9%): [9763,604, 10855,618] (assumes normal distribution)
 
-# Run complete. Total time: 00:27:19
+# Run complete. Total time: 00:03:07
+
+Benchmark                   Mode  Cnt      Score     Error  Units
+Matrix.usualMultiplication  avgt    6  10309,611 ± 546,007  ms/op
+
+Process finished with exit code 0
+
+------- optimized with JMH (1000x2000 и 2000x1000)
+# Run progress: 0,00% complete, ETA 00:00:00
+# Warmup Fork: 1 of 1
+# Warmup Iteration   1: 1822,444 ±(99.9%) 1359,777 ms/op
+# Warmup Iteration   2: 1587,560 ±(99.9%) 512,533 ms/op
+# Warmup Iteration   3: 1294,902 ±(99.9%) 271,364 ms/op
+Iteration   1: 1566,591 ±(99.9%) 749,857 ms/op
+Iteration   2: 1359,718 ±(99.9%) 322,667 ms/op
+Iteration   3: 1508,752 ±(99.9%) 247,796 ms/op
+
+# Run progress: 33,33% complete, ETA 00:00:58
+# Fork: 1 of 2
+# Warmup Iteration   1: 1359,914 ±(99.9%) 404,987 ms/op
+# Warmup Iteration   2: 1372,696 ±(99.9%) 273,213 ms/op
+# Warmup Iteration   3: 1475,643 ±(99.9%) 630,258 ms/op
+Iteration   1: 1498,821 ±(99.9%) 403,999 ms/op
+Iteration   2: 1520,928 ±(99.9%) 172,867 ms/op
+Iteration   3: 1415,017 ±(99.9%) 202,114 ms/op
+
+# Run progress: 66,67% complete, ETA 00:00:28
+# Fork: 2 of 2
+# Warmup Iteration   1: 1459,903 ±(99.9%) 619,711 ms/op
+# Warmup Iteration   2: 1328,448 ±(99.9%) 293,832 ms/op
+# Warmup Iteration   3: 1658,715 ±(99.9%) 548,248 ms/op
+Iteration   1: 1523,343 ±(99.9%) 666,509 ms/op
+Iteration   2: 1423,830 ±(99.9%) 209,187 ms/op
+Iteration   3: 1373,529 ±(99.9%) 711,698 ms/op
+
+
+Result "task.Matrix.optimizedMultiplication":
+  1459,244 ±(99.9%) 177,517 ms/op [Average]
+  (min, avg, max) = (1373,529, 1459,244, 1523,343), stdev = 63,304
+  CI (99.9%): [1281,727, 1636,762] (assumes normal distribution)
+
+# Run complete. Total time: 00:01:25
+
+Benchmark                       Mode  Cnt     Score     Error  Units
+Matrix.optimizedMultiplication  avgt    6  1459,244 ± 177,517  ms/op
+
+Process finished with exit code 0
+
+------------------------------------------------------------
+!!!!!!!!!!!!!!!!!!!Для матриц размером 600x1000 и 1000x6000!!!!!!!!!!!!!!!!!!!!!
+------- usual with JMH (600x1000 и 1000x6000)
+# Run progress: 0,00% complete, ETA 00:00:00
+# Warmup Fork: 1 of 1
+# Warmup Iteration   1: 866,401 ms/op
+# Warmup Iteration   2: 816,398 ms/op
+# Warmup Iteration   3: 630,087 ms/op
+Iteration   1: 606,018 ms/op
+Iteration   2: 600,982 ms/op
+Iteration   3: 619,660 ms/op
+
+# Run progress: 33,33% complete, ETA 00:00:10
+# Fork: 1 of 2
+# Warmup Iteration   1: 798,596 ms/op
+# Warmup Iteration   2: 822,466 ms/op
+# Warmup Iteration   3: 678,382 ms/op
+Iteration   1: 742,178 ms/op
+Iteration   2: 723,540 ms/op
+Iteration   3: 663,874 ms/op
+
+# Run progress: 66,67% complete, ETA 00:00:05
+# Fork: 2 of 2
+# Warmup Iteration   1: 862,119 ms/op
+# Warmup Iteration   2: 836,830 ms/op
+# Warmup Iteration   3: 634,663 ms/op
+Iteration   1: 655,895 ms/op
+Iteration   2: 625,856 ms/op
+Iteration   3: 651,019 ms/op
+
+Result "task.Matrix.usualMultiplication":
+  677,060 ±(99.9%) 127,414 ms/op [Average]
+  (min, avg, max) = (625,856, 677,060, 742,178), stdev = 45,437
+  CI (99.9%): [549,647, 804,474] (assumes normal distribution)
+
+------- optimized with JMH (600x1000 и 1000x6000)
+# Run progress: 0,00% complete, ETA 00:00:00
+# Warmup Fork: 1 of 1
+# Warmup Iteration   1: 236,532 ±(99.9%) 286,400 ms/op
+# Warmup Iteration   2: 212,484 ±(99.9%) 192,663 ms/op
+# Warmup Iteration   3: 193,516 ±(99.9%) 79,532 ms/op
+Iteration   1: 218,991 ±(99.9%) 133,243 ms/op
+Iteration   2: 208,196 ±(99.9%) 130,478 ms/op
+Iteration   3: 217,796 ±(99.9%) 110,250 ms/op
+
+# Run progress: 33,33% complete, ETA 00:00:10
+# Fork: 1 of 2
+# Warmup Iteration   1: 251,656 ±(99.9%) 127,457 ms/op
+# Warmup Iteration   2: 242,272 ±(99.9%) 72,605 ms/op
+# Warmup Iteration   3: 255,066 ±(99.9%) 58,082 ms/op
+Iteration   1: 236,583 ±(99.9%) 124,123 ms/op
+Iteration   2: 210,687 ±(99.9%) 89,246 ms/op
+Iteration   3: 191,874 ±(99.9%) 123,357 ms/op
+
+# Run progress: 66,67% complete, ETA 00:00:05
+# Fork: 2 of 2
+# Warmup Iteration   1: 232,882 ±(99.9%) 280,825 ms/op
+# Warmup Iteration   2: 219,017 ±(99.9%) 112,796 ms/op
+# Warmup Iteration   3: 203,500 ±(99.9%) 62,331 ms/op
+Iteration   1: 195,376 ±(99.9%) 69,595 ms/op
+Iteration   2: 209,889 ±(99.9%) 87,347 ms/op
+Iteration   3: 193,019 ±(99.9%) 36,156 ms/op
+
+
+Result "task.Matrix.optimizedMultiplication":
+  206,238 ±(99.9%) 47,803 ms/op [Average]
+  (min, avg, max) = (191,874, 206,238, 236,583), stdev = 17,047
+  CI (99.9%): [158,435, 254,040] (assumes normal distribution)
  */
