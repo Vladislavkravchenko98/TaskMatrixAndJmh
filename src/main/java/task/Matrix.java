@@ -72,7 +72,7 @@ public class Matrix {
     //@Threads(4)
     // Обычное умножение матриц
     public static void usualMultiplication() {
-        Date start = new Date();
+        //Date start = new Date();
         var matrixResult = new int[matrixA.length][matrixB[0].length];
         for (int i = 0; i < matrixA.length; i++) {
             for (int j = 0; j < matrixB[0].length; j++) {
@@ -81,8 +81,8 @@ public class Matrix {
                 }
             }
         }
-        Date end = new Date();
-        System.out.println("\n usual Time taken in milli seconds: " + (end.getTime() - start.getTime()));
+        //Date end = new Date();
+        //System.out.println("\n usual Time taken in milli seconds: " + (end.getTime() - start.getTime()));
         //printMatrix(matrixResult);
     }
 
@@ -95,7 +95,7 @@ public class Matrix {
     //@Threads(4)
     // Оптимизированное умножение матриц
     public static void optimizedMultiplication() {
-        Date start = new Date();
+        //Date start = new Date();
         var transposedB = transposition(matrixB);
         var matrixResult = new int[matrixA.length][transposedB.length];
         for (int i = 0; i < matrixA.length; i++) {
@@ -105,8 +105,8 @@ public class Matrix {
                 }
             }
         }
-        Date end = new Date();
-        System.out.println("\n optimized Time taken in milli seconds: " + (end.getTime() - start.getTime()));
+        //Date end = new Date();
+        //System.out.println("\n optimized Time taken in milli seconds: " + (end.getTime() - start.getTime()));
         //printMatrix(matrixResult);
     }
 
